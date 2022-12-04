@@ -1809,7 +1809,7 @@ __webpack_require__.r(__webpack_exports__);
 class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
   constructor() {
     super();
-    this.currentPage = "project/index.html";
+    this.currentPage = "index.html";
     this.state = {
       pageList: [],
       newPageName: ""
@@ -1825,13 +1825,22 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     this.loadPageList();
   }
   open(page) {
-    this.currentPage = `../${page}?rnd=${Math.random()}`;
-    axios__WEBPACK_IMPORTED_MODULE_1___default().get(`../${page}`).then(res => this.parseStrToDOM(res.data)).then(this.wrapTextNodes).then(dom => {
+    this.currentPage = page;
+    axios__WEBPACK_IMPORTED_MODULE_1___default().get(`../project/${page}?rnd=${Math.random()}`).then(res => this.parseStrToDOM(res.data)).then(this.wrapTextNodes).then(dom => {
       this.virtualDom = dom;
       return dom;
     }).then(this.serializeDOMToString).then(html => axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/saveTempPage.php", {
       html
     })).then(() => this.iframe.load("../project/temp.html")).then(() => this.enableEditing());
+  }
+  save() {
+    const newDom = this.virtualDom.cloneNode(this.virtualDom);
+    this.unwrapTextNodes(newDom);
+    const html = this.serializeDOMToString(newDom);
+    axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/savePage.php", {
+      pageName: this.currentPage,
+      html
+    });
   }
   enableEditing() {
     this.iframe.contentDocument.body.querySelectorAll("text-editor").forEach(element => {
@@ -1844,7 +1853,6 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
   onTextEdit(element) {
     const id = element.getAttribute("nodeid");
     this.virtualDom.body.querySelector(`[nodeid="${id}"]`).innerHTML = element.innerHTML;
-    console.log(this.virtualDom);
   }
   parseStrToDOM(str) {
     const parser = new DOMParser();
@@ -1875,6 +1883,11 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     const serializer = new XMLSerializer();
     return serializer.serializeToString(dom);
   }
+  unwrapTextNodes(dom) {
+    dom.body.querySelectorAll("text-editor").forEach(element => {
+      element.parentNode.replaceChild(element.firstChild, element);
+    });
+  }
   loadPageList() {
     axios__WEBPACK_IMPORTED_MODULE_1___default().get("./api").then(res => this.setState({
       pageList: res.data
@@ -1902,10 +1915,13 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     //     )
     // });
 
-    return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("iframe", {
+    return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(react__WEBPACK_IMPORTED_MODULE_2__.Fragment, null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("button", {
+      onClick: () => this.save()
+    }, "Click"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("iframe", {
       src: this.currentPage,
       frameBorder: "0"
-    })
+    }))
+
     // <>
     //     <input
     //         onChange={(e) => {this.setState({newPageName: e.target.value})}}
