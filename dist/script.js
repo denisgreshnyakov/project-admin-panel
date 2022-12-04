@@ -1787,6 +1787,45 @@ module.exports = {
 
 /***/ }),
 
+/***/ "./app/src/components/editor/editor-text/editor-text.js":
+/*!**************************************************************!*\
+  !*** ./app/src/components/editor/editor-text/editor-text.js ***!
+  \**************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ EditorText)
+/* harmony export */ });
+class EditorText {
+  constructor(element, virtualElement) {
+    this.element = element;
+    this.virtualElement = virtualElement;
+    this.element.addEventListener("click", () => this.onClick());
+    this.element.addEventListener("blur", () => this.onBlur());
+    this.element.addEventListener("keypress", e => this.onKeypress(e));
+    this.element.addEventListener("input", () => this.onTextEdit());
+  }
+  onKeypress(e) {
+    if (e.keyCode === 13) {
+      this.element.blur();
+    }
+  }
+  onClick() {
+    this.element.contentEditable = "true";
+    this.element.focus();
+  }
+  onBlur() {
+    this.element.removeAttribute("contenteditable");
+  }
+  onTextEdit() {
+    this.virtualElement.innerHTML = this.element.innerHTML;
+  }
+}
+
+/***/ }),
+
 /***/ "./app/src/components/editor/editor.js":
 /*!*********************************************!*\
   !*** ./app/src/components/editor/editor.js ***!
@@ -1804,6 +1843,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
 /* harmony import */ var _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../helpers/dom-helper.js */ "./app/src/helpers/dom-helper.js");
+/* harmony import */ var _editor_text_editor_text_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./editor-text/editor-text.js */ "./app/src/components/editor/editor-text/editor-text.js");
+
 
 
 
@@ -1833,7 +1874,7 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
       return dom;
     }).then(_helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].serializeDOMToString).then(html => axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/saveTempPage.php", {
       html
-    })).then(() => this.iframe.load("../project/temp.html")).then(() => this.enableEditing());
+    })).then(() => this.iframe.load("../project/temp.html")).then(() => this.enableEditing()).then(() => this.injectStyles());
   }
   save() {
     const newDom = this.virtualDom.cloneNode(this.virtualDom);
@@ -1846,15 +1887,24 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
   }
   enableEditing() {
     this.iframe.contentDocument.body.querySelectorAll("text-editor").forEach(element => {
-      element.contentEditable = "true";
-      element.addEventListener("input", () => {
-        this.onTextEdit(element);
-      });
+      const id = element.getAttribute("nodeid");
+      const virtualElement = this.virtualDom.body.querySelector(`[nodeid="${id}"]`);
+      new _editor_text_editor_text_js__WEBPACK_IMPORTED_MODULE_4__["default"](element, virtualElement);
     });
   }
-  onTextEdit(element) {
-    const id = element.getAttribute("nodeid");
-    this.virtualDom.body.querySelector(`[nodeid="${id}"]`).innerHTML = element.innerHTML;
+  injectStyles() {
+    const style = this.iframe.contentDocument.createElement("style");
+    style.innerHTML = `
+      text-editor:hover {
+        outline: 3px solid orange;
+        outline-offset: 8px;
+      }
+      text-editor:focus {
+        outline: 3px solid red;
+        outline-offset: 8px;
+      }
+    `;
+    this.iframe.contentDocument.head.appendChild(style);
   }
   loadPageList() {
     axios__WEBPACK_IMPORTED_MODULE_1___default().get("./api").then(res => this.setState({
