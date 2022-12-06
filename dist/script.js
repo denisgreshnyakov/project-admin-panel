@@ -1807,15 +1807,29 @@ const ChooseModal = _ref => {
     data,
     redirect
   } = _ref;
-  const pageList = data.map(item => {
-    return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("li", {
-      key: item
-    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("a", {
-      className: "uk-link-muted uk-modal-close",
-      href: "#",
-      onClick: e => redirect(e, item)
-    }, item));
+  const list = data.map(item => {
+    if (item.time) {
+      return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("li", {
+        key: item.file
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("a", {
+        className: "uk-link-muted uk-modal-close",
+        href: "#",
+        onClick: e => redirect(e, item.file)
+      }, "\u0420\u0435\u0437\u0435\u0440\u0432\u043D\u0430\u044F \u043A\u043E\u043F\u0438\u044F \u043E\u0442 ", item.time));
+    } else {
+      return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("li", {
+        key: item
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("a", {
+        className: "uk-link-muted uk-modal-close",
+        href: "#",
+        onClick: e => redirect(e, item)
+      }, item));
+    }
   });
+  let msg;
+  if (data.length < 1) {
+    msg = /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", null, "\u0420\u0435\u0437\u0435\u0440\u0432\u043D\u044B\u0435 \u043A\u043E\u043F\u0438\u0438 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B!");
+  }
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", {
     id: target,
     "uk-modal": modal.toString()
@@ -1823,9 +1837,9 @@ const ChooseModal = _ref => {
     className: "uk-modal-dialog uk-modal-body"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("h2", {
     className: "uk-modal-title"
-  }, "\u041E\u0442\u043A\u0440\u044B\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("ul", {
+  }, "\u041E\u0442\u043A\u0440\u044B\u0442\u044C"), msg, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("ul", {
     className: "uk-list uk-list-divider"
-  }, pageList), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("p", {
+  }, list), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("p", {
     className: "uk-text-right"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
     className: "uk-button uk-button-default uk-modal-close",
@@ -1976,6 +1990,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _spinner_spinner_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../spinner/spinner.js */ "./app/src/components/spinner/spinner.js");
 /* harmony import */ var _confirm_modal_confirm_modal_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../confirm-modal/confirm-modal.js */ "./app/src/components/confirm-modal/confirm-modal.js");
 /* harmony import */ var _choose_modal_index_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../choose-modal/index.js */ "./app/src/components/choose-modal/index.js");
+/* harmony import */ var _panel_panel_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../panel/panel.js */ "./app/src/components/panel/panel.js");
+
 
 
 
@@ -1991,14 +2007,15 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     this.currentPage = "index.html";
     this.state = {
       pageList: [],
+      backupsList: [],
       newPageName: "",
       loading: true
     };
-    this.createNewPage = this.createNewPage.bind(this);
     this.isLoading = this.isLoading.bind(this);
     this.isLoaded = this.isLoaded.bind(this);
     this.save = this.save.bind(this);
     this.init = this.init.bind(this);
+    this.restoreBackup = this.restoreBackup.bind(this);
   }
   componentDidMount() {
     this.init(null, this.currentPage);
@@ -2011,6 +2028,7 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     this.iframe = document.querySelector("iframe");
     this.open(page, this.isLoaded);
     this.loadPageList();
+    this.loadBackupsList();
   }
   open(page, cb) {
     this.currentPage = page;
@@ -2020,16 +2038,18 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     }).then(_helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].serializeDOMToString).then(html => axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/saveTempPage.php", {
       html
     })).then(() => this.iframe.load("../project/yfuy1g221ub_hhg44.html")).then(() => axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/deleteTempPage.php")).then(() => this.enableEditing()).then(() => this.injectStyles()).then(cb);
+    this.loadBackupsList();
   }
-  save(onSuccess, onError) {
+  async save(onSuccess, onError) {
     this.isLoading();
     const newDom = this.virtualDom.cloneNode(this.virtualDom);
     _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].unwrapTextNodes(newDom);
     const html = _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].serializeDOMToString(newDom);
-    axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/savePage.php", {
+    await axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/savePage.php", {
       pageName: this.currentPage,
       html
     }).then(onSuccess).catch(onError).finally(this.isLoaded);
+    this.loadBackupsList();
   }
   enableEditing() {
     this.iframe.contentDocument.body.querySelectorAll("text-editor").forEach(element => {
@@ -2057,15 +2077,33 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
       pageList: res.data
     }));
   }
-  createNewPage() {
-    axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/createNewPage.php", {
-      name: this.state.newPageName
-    }).then(this.loadPageList()).catch(() => alert("Страница уже существует!"));
+
+  //загрузка бэкапов для текущей страницы
+  loadBackupsList() {
+    axios__WEBPACK_IMPORTED_MODULE_1___default().get("./backups/backups.json").then(res => this.setState({
+      backupsList: res.data.filter(backup => {
+        return backup.page === this.currentPage;
+      })
+    }));
   }
-  deletePage(page) {
-    axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/deletePage.php", {
-      name: page
-    }).then(this.loadPageList()).catch(() => alert("Страницы не существует!"));
+  restoreBackup(e, backup) {
+    if (e) {
+      e.preventDefault();
+    }
+    uikit__WEBPACK_IMPORTED_MODULE_5___default().modal.confirm("Вы действительно хотите восстановить страницу из этой резервной копии? Все несохраненные данные будут потеряны!", {
+      labels: {
+        ok: "Восстановить",
+        cancel: "Отмена"
+      }
+    }).then(() => {
+      this.isLoading();
+      return axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/restoreBackup.php", {
+        page: this.currentPage,
+        file: backup
+      });
+    }).then(() => {
+      this.open(this.currentPage, this.isLoaded);
+    });
   }
   isLoading() {
     this.setState({
@@ -2080,25 +2118,19 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
   render() {
     const {
       loading,
-      pageList
+      pageList,
+      backupsList
     } = this.state;
     const modal = true;
     let spinner;
+    console.log(backupsList);
     loading ? spinner = /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_spinner_spinner_js__WEBPACK_IMPORTED_MODULE_6__["default"], {
       active: true
     }) : spinner = /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_spinner_spinner_js__WEBPACK_IMPORTED_MODULE_6__["default"], null);
     return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(react__WEBPACK_IMPORTED_MODULE_2__.Fragment, null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("iframe", {
-      src: this.currentPage,
+      src: "",
       frameBorder: "0"
-    }), spinner, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("div", {
-      className: "panel"
-    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("button", {
-      className: "uk-button uk-button-primary uk-margin-small-right",
-      "uk-toggle": "target: #modal-open"
-    }, "\u041E\u0442\u043A\u0440\u044B\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("button", {
-      className: "uk-button uk-button-primary",
-      "uk-toggle": "target: #modal-save"
-    }, "\u041E\u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_confirm_modal_confirm_modal_js__WEBPACK_IMPORTED_MODULE_7__["default"], {
+    }), spinner, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_panel_panel_js__WEBPACK_IMPORTED_MODULE_9__["default"], null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_confirm_modal_confirm_modal_js__WEBPACK_IMPORTED_MODULE_7__["default"], {
       modal: modal,
       target: "modal-save",
       method: this.save
@@ -2107,6 +2139,11 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
       target: "modal-open",
       data: pageList,
       redirect: this.init
+    }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_choose_modal_index_js__WEBPACK_IMPORTED_MODULE_8__["default"], {
+      modal: modal,
+      target: "modal-backup",
+      data: backupsList,
+      redirect: this.restoreBackup
     }));
   }
 }
@@ -2127,6 +2164,37 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _editor__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./editor */ "./app/src/components/editor/editor.js");
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_editor__WEBPACK_IMPORTED_MODULE_0__["default"]);
+
+/***/ }),
+
+/***/ "./app/src/components/panel/panel.js":
+/*!*******************************************!*\
+  !*** ./app/src/components/panel/panel.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+const Panel = () => {
+  return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", {
+    className: "panel"
+  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
+    className: "uk-button uk-button-primary uk-margin-small-right",
+    "uk-toggle": "target: #modal-open"
+  }, "\u041E\u0442\u043A\u0440\u044B\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
+    className: "uk-button uk-button-primary",
+    "uk-toggle": "target: #modal-save"
+  }, "\u041E\u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
+    className: "uk-button uk-button-default",
+    "uk-toggle": "target: #modal-backup"
+  }, "\u0412\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C"));
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (Panel);
 
 /***/ }),
 
