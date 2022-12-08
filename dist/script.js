@@ -1899,7 +1899,7 @@ const ConfirmModal = _ref => {
   }, "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("p", null, "\u0412\u044B \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F?"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("p", {
     className: "uk-text-right"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
-    className: "uk-button uk-button-default uk-modal-close",
+    className: "uk-button uk-button-default uk-margin-small-right uk-modal-close",
     type: "button"
   }, "\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
     className: "uk-button uk-button-primary uk-modal-close",
@@ -1918,6 +1918,173 @@ const ConfirmModal = _ref => {
   }, "\u041E\u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C"))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ConfirmModal);
+
+/***/ }),
+
+/***/ "./app/src/components/editor-meta/editor-meta.js":
+/*!*******************************************************!*\
+  !*** ./app/src/components/editor-meta/editor-meta.js ***!
+  \*******************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ EditorMeta)
+/* harmony export */ });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+class EditorMeta extends react__WEBPACK_IMPORTED_MODULE_0__.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      meta: {
+        title: "",
+        keywords: "",
+        description: ""
+      }
+    };
+  }
+  componentDidMount() {
+    this.getMeta(this.props.virtualDom);
+  }
+  componentDidUpdate(prevProps) {
+    if (this.props.virtualDom !== prevProps.virtualDom) {
+      this.getMeta(this.props.virtualDom);
+    }
+  }
+  getMeta(virtualDom) {
+    this.title = virtualDom.head.querySelector("title") || virtualDom.head.appendChild(virtualDom.createElement("title"));
+    this.keywords = virtualDom.head.querySelector('meta[name="keywords"]');
+    if (!this.keywords) {
+      this.keywords = virtualDom.head.appendChild(virtualDom.createElement("meta"));
+      this.keywords.setAttribute("name", "keywords");
+      this.keywords.setAttribute("content", "");
+    }
+    this.description = virtualDom.head.querySelector('meta[name="description"]');
+    if (!this.description) {
+      this.description = virtualDom.head.appendChild(virtualDom.createElement("meta"));
+      this.description.setAttribute("name", "description");
+      this.description.setAttribute("content", "");
+    }
+    this.setState({
+      meta: {
+        title: this.title.innerHTML,
+        keywords: this.keywords.getAttribute("content"),
+        description: this.description.getAttribute("content")
+      }
+    });
+  }
+  applyMeta() {
+    this.title.innerHTML = this.state.meta.title;
+    this.keywords.setAttribute("content", this.state.meta.keywords);
+    this.description.setAttribute("content", this.state.meta.description);
+  }
+  onValueChange(e) {
+    if (e.target.getAttribute("data-title")) {
+      e.persist();
+      this.setState(_ref => {
+        let {
+          meta
+        } = _ref;
+        const newMeta = {
+          ...meta,
+          title: e.target.value
+        };
+        return {
+          meta: newMeta
+        };
+      });
+    } else if (e.target.getAttribute("data-key")) {
+      e.persist();
+      this.setState(_ref2 => {
+        let {
+          meta
+        } = _ref2;
+        const newMeta = {
+          ...meta,
+          keywords: e.target.value
+        };
+        return {
+          meta: newMeta
+        };
+      });
+    } else {
+      e.persist();
+      this.setState(_ref3 => {
+        let {
+          meta
+        } = _ref3;
+        const newMeta = {
+          ...meta,
+          description: e.target.value
+        };
+        return {
+          meta: newMeta
+        };
+      });
+    }
+  }
+  render() {
+    const {
+      modal,
+      target
+    } = this.props;
+    const {
+      title,
+      keywords,
+      description
+    } = this.state.meta;
+    return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", {
+      id: target,
+      "uk-modal": modal.toString()
+    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", {
+      className: "uk-modal-dialog uk-modal-body"
+    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("h2", {
+      className: "uk-modal-title"
+    }, "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 Meta-\u0442\u0435\u0433\u043E\u0432"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("form", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", {
+      className: "uk-margin"
+    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("input", {
+      "data-title": true,
+      className: "uk-input",
+      type: "text",
+      placeholder: "Title",
+      value: title,
+      onChange: e => this.onValueChange(e)
+    })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", {
+      className: "uk-margin"
+    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("textarea", {
+      "data-key": true,
+      className: "uk-textarea",
+      rows: "5",
+      placeholder: "Keywords",
+      "aria-label": "Textarea",
+      value: keywords,
+      onChange: e => this.onValueChange(e)
+    })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("div", {
+      className: "uk-margin"
+    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("textarea", {
+      "data-descr": true,
+      className: "uk-textarea",
+      rows: "5",
+      placeholder: "Description",
+      "aria-label": "Textarea",
+      value: description,
+      onChange: e => this.onValueChange(e)
+    }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("p", {
+      className: "uk-text-right"
+    }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
+      className: "uk-button uk-button-default uk-margin-small-right uk-modal-close",
+      type: "button"
+    }, "\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
+      className: "uk-button uk-button-primary uk-modal-close",
+      type: "button",
+      onClick: () => {
+        this.applyMeta();
+      }
+    }, "\u041F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C"))));
+  }
+}
 
 /***/ }),
 
@@ -1991,6 +2158,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _confirm_modal_confirm_modal_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../confirm-modal/confirm-modal.js */ "./app/src/components/confirm-modal/confirm-modal.js");
 /* harmony import */ var _choose_modal_index_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../choose-modal/index.js */ "./app/src/components/choose-modal/index.js");
 /* harmony import */ var _panel_panel_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../panel/panel.js */ "./app/src/components/panel/panel.js");
+/* harmony import */ var _editor_meta_editor_meta_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../editor-meta/editor-meta.js */ "./app/src/components/editor-meta/editor-meta.js");
+
 
 
 
@@ -2123,7 +2292,6 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     } = this.state;
     const modal = true;
     let spinner;
-    console.log(backupsList);
     loading ? spinner = /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_spinner_spinner_js__WEBPACK_IMPORTED_MODULE_6__["default"], {
       active: true
     }) : spinner = /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_spinner_spinner_js__WEBPACK_IMPORTED_MODULE_6__["default"], null);
@@ -2144,7 +2312,11 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
       target: "modal-backup",
       data: backupsList,
       redirect: this.restoreBackup
-    }));
+    }), this.virtualDom ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_editor_meta_editor_meta_js__WEBPACK_IMPORTED_MODULE_10__["default"], {
+      modal: modal,
+      target: "modal-meta",
+      virtualDom: this.virtualDom
+    }) : false);
   }
 }
 
@@ -2187,9 +2359,12 @@ const Panel = () => {
     className: "uk-button uk-button-primary uk-margin-small-right",
     "uk-toggle": "target: #modal-open"
   }, "\u041E\u0442\u043A\u0440\u044B\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
-    className: "uk-button uk-button-primary",
+    className: "uk-button uk-button-primary uk-margin-small-right",
     "uk-toggle": "target: #modal-save"
   }, "\u041E\u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
+    className: "uk-button uk-button-primary uk-margin-small-right",
+    "uk-toggle": "target: #modal-meta"
+  }, "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u041C\u0415\u0422\u0410"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
     className: "uk-button uk-button-default",
     "uk-toggle": "target: #modal-backup"
   }, "\u0412\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C"));

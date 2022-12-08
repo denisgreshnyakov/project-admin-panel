@@ -9,7 +9,7 @@ const ConfirmModal = ({ modal, target, method }) => {
         <p>Вы действительно хотите сохранить изменения?</p>
         <p className="uk-text-right">
           <button
-            className="uk-button uk-button-default uk-modal-close"
+            className="uk-button uk-button-default uk-margin-small-right uk-modal-close"
             type="button"
           >
             Отменить
