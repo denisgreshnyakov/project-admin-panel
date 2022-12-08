@@ -1921,6 +1921,49 @@ const ConfirmModal = _ref => {
 
 /***/ }),
 
+/***/ "./app/src/components/editor-images/editor-images.js":
+/*!***********************************************************!*\
+  !*** ./app/src/components/editor-images/editor-images.js ***!
+  \***********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ EditorImages)
+/* harmony export */ });
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/index.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(axios__WEBPACK_IMPORTED_MODULE_0__);
+
+class EditorImages {
+  constructor(element, virtualElement) {
+    this.element = element;
+    this.virtualElement = virtualElement;
+    this.element.addEventListener("click", () => this.onClick());
+    this.imgUploader = document.querySelector("#img-upload");
+  }
+  onClick() {
+    this.imgUploader.click();
+    this.imgUploader.addEventListener("change", () => {
+      if (this.imgUploader.files && this.imgUploader.files[0]) {
+        let formData = new FormData();
+        formData.append("image", this.imgUploader.files[0]);
+        axios__WEBPACK_IMPORTED_MODULE_0___default().post("./api/uploadImage.php", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        }).then(res => {
+          console.log(res.data.src);
+          this.virtualElement = this.element.src = `./img/${res.data.src}`;
+          this.imgUploader.value = "";
+        });
+      }
+    });
+  }
+}
+
+/***/ }),
+
 /***/ "./app/src/components/editor-meta/editor-meta.js":
 /*!*******************************************************!*\
   !*** ./app/src/components/editor-meta/editor-meta.js ***!
@@ -2159,6 +2202,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _choose_modal_index_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../choose-modal/index.js */ "./app/src/components/choose-modal/index.js");
 /* harmony import */ var _panel_panel_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../panel/panel.js */ "./app/src/components/panel/panel.js");
 /* harmony import */ var _editor_meta_editor_meta_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../editor-meta/editor-meta.js */ "./app/src/components/editor-meta/editor-meta.js");
+/* harmony import */ var _editor_images_editor_images_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../editor-images/editor-images.js */ "./app/src/components/editor-images/editor-images.js");
+
 
 
 
@@ -2201,7 +2246,7 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
   }
   open(page, cb) {
     this.currentPage = page;
-    axios__WEBPACK_IMPORTED_MODULE_1___default().get(`../project/${page}?rnd=${Math.random()}`).then(res => _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].parseStrToDOM(res.data)).then(_helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].wrapTextNodes).then(dom => {
+    axios__WEBPACK_IMPORTED_MODULE_1___default().get(`../project/${page}?rnd=${Math.random()}`).then(res => _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].parseStrToDOM(res.data)).then(_helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].wrapTextNodes).then(_helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].wrapImages).then(dom => {
       this.virtualDom = dom;
       return dom;
     }).then(_helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].serializeDOMToString).then(html => axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/saveTempPage.php", {
@@ -2213,6 +2258,7 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     this.isLoading();
     const newDom = this.virtualDom.cloneNode(this.virtualDom);
     _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].unwrapTextNodes(newDom);
+    _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].unwrapImages(newDom);
     const html = _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].serializeDOMToString(newDom);
     await axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/savePage.php", {
       pageName: this.currentPage,
@@ -2226,6 +2272,11 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
       const virtualElement = this.virtualDom.body.querySelector(`[nodeid="${id}"]`);
       new _editor_text_editor_text_js__WEBPACK_IMPORTED_MODULE_4__["default"](element, virtualElement);
     });
+    this.iframe.contentDocument.body.querySelectorAll("[editableimgid]").forEach(element => {
+      const id = element.getAttribute("editableimgid");
+      const virtualElement = this.virtualDom.body.querySelector(`[editableimgid="${id}"]`);
+      new _editor_images_editor_images_js__WEBPACK_IMPORTED_MODULE_11__["default"](element, virtualElement);
+    });
   }
   injectStyles() {
     const style = this.iframe.contentDocument.createElement("style");
@@ -2236,6 +2287,10 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
       }
       text-editor:focus {
         outline: 3px solid red;
+        outline-offset: 8px;
+      }
+      [editableimgid]:hover {
+        outline: 3px solid orange;
         outline-offset: 8px;
       }
     `;
@@ -2298,6 +2353,13 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(react__WEBPACK_IMPORTED_MODULE_2__.Fragment, null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("iframe", {
       src: "",
       frameBorder: "0"
+    }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement("input", {
+      id: "img-upload",
+      type: "file",
+      accept: "image/*",
+      style: {
+        display: "none"
+      }
     }), spinner, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_panel_panel_js__WEBPACK_IMPORTED_MODULE_9__["default"], null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_2__.createElement(_confirm_modal_confirm_modal_js__WEBPACK_IMPORTED_MODULE_7__["default"], {
       modal: modal,
       target: "modal-save",
@@ -2444,6 +2506,17 @@ class DOMHelper {
   static unwrapTextNodes(dom) {
     dom.body.querySelectorAll("text-editor").forEach(element => {
       element.parentNode.replaceChild(element.firstChild, element);
+    });
+  }
+  static wrapImages(dom) {
+    dom.body.querySelectorAll("img").forEach((img, i) => {
+      img.setAttribute("editableimgid", i);
+    });
+    return dom;
+  }
+  static unwrapImages(dom) {
+    dom.body.querySelectorAll("[editableimgid]").forEach(img => {
+      img.removeAttribute("editableimgid");
     });
   }
 }
