@@ -1879,9 +1879,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
-/* harmony import */ var uikit__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! uikit */ "./node_modules/uikit/dist/js/uikit.js");
-/* harmony import */ var uikit__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(uikit__WEBPACK_IMPORTED_MODULE_1__);
-
 
 const ConfirmModal = _ref => {
   let {
@@ -1904,17 +1901,7 @@ const ConfirmModal = _ref => {
   }, "\u041E\u0442\u043C\u0435\u043D\u0438\u0442\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0__.createElement("button", {
     className: "uk-button uk-button-primary uk-modal-close",
     type: "button",
-    onClick: () => method(() => {
-      uikit__WEBPACK_IMPORTED_MODULE_1___default().notification({
-        message: "Успешно сохранено",
-        status: "success"
-      });
-    }, () => {
-      uikit__WEBPACK_IMPORTED_MODULE_1___default().notification({
-        message: "Ошибка сохранения",
-        status: "danger"
-      });
-    })
+    onClick: () => method()
   }, "\u041E\u043F\u0443\u0431\u043B\u0438\u043A\u043E\u0432\u0430\u0442\u044C"))));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (ConfirmModal);
@@ -1937,10 +1924,17 @@ __webpack_require__.r(__webpack_exports__);
 
 class EditorImages {
   constructor(element, virtualElement) {
+    for (var _len = arguments.length, _ref = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+      _ref[_key - 2] = arguments[_key];
+    }
+    let [isLoading, isLoaded, showNotifications] = _ref;
     this.element = element;
     this.virtualElement = virtualElement;
     this.element.addEventListener("click", () => this.onClick());
     this.imgUploader = document.querySelector("#img-upload");
+    this.isLoading = isLoading;
+    this.isLoaded = isLoaded;
+    this.showNotifications = showNotifications;
   }
   onClick() {
     this.imgUploader.click();
@@ -1948,14 +1942,16 @@ class EditorImages {
       if (this.imgUploader.files && this.imgUploader.files[0]) {
         let formData = new FormData();
         formData.append("image", this.imgUploader.files[0]);
+        this.isLoading();
         axios__WEBPACK_IMPORTED_MODULE_0___default().post("./api/uploadImage.php", formData, {
           headers: {
             "Content-Type": "multipart/form-data"
           }
         }).then(res => {
-          console.log(res.data.src);
-          this.virtualElement = this.element.src = `./img/${res.data.src}`;
+          this.virtualElement.src = this.element.src = `./img/${res.data.src}`;
+        }).catch(() => this.showNotifications("Ошибка сохранения", "danger")).finally(() => {
           this.imgUploader.value = "";
+          this.isLoaded();
         });
       }
     });
@@ -2254,7 +2250,7 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     })).then(() => this.iframe.load("../project/yfuy1g221ub_hhg44.html")).then(() => axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/deleteTempPage.php")).then(() => this.enableEditing()).then(() => this.injectStyles()).then(cb);
     this.loadBackupsList();
   }
-  async save(onSuccess, onError) {
+  async save() {
     this.isLoading();
     const newDom = this.virtualDom.cloneNode(this.virtualDom);
     _helpers_dom_helper_js__WEBPACK_IMPORTED_MODULE_3__["default"].unwrapTextNodes(newDom);
@@ -2263,7 +2259,7 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     await axios__WEBPACK_IMPORTED_MODULE_1___default().post("./api/savePage.php", {
       pageName: this.currentPage,
       html
-    }).then(onSuccess).catch(onError).finally(this.isLoaded);
+    }).then(() => this.showNotifications("Успешно сохранено", "success")).catch(() => this.showNotifications("Ошибка сохранения", "danger")).finally(this.isLoaded);
     this.loadBackupsList();
   }
   enableEditing() {
@@ -2275,7 +2271,7 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
     this.iframe.contentDocument.body.querySelectorAll("[editableimgid]").forEach(element => {
       const id = element.getAttribute("editableimgid");
       const virtualElement = this.virtualDom.body.querySelector(`[editableimgid="${id}"]`);
-      new _editor_images_editor_images_js__WEBPACK_IMPORTED_MODULE_11__["default"](element, virtualElement);
+      new _editor_images_editor_images_js__WEBPACK_IMPORTED_MODULE_11__["default"](element, virtualElement, this.isLoading, this.isLoaded, this.showNotifications);
     });
   }
   injectStyles() {
@@ -2295,6 +2291,12 @@ class Editor extends react__WEBPACK_IMPORTED_MODULE_2__.Component {
       }
     `;
     this.iframe.contentDocument.head.appendChild(style);
+  }
+  showNotifications(message, status) {
+    uikit__WEBPACK_IMPORTED_MODULE_5___default().notification({
+      message,
+      status
+    });
   }
   loadPageList() {
     axios__WEBPACK_IMPORTED_MODULE_1___default().get("./api/pageList.php").then(res => this.setState({
