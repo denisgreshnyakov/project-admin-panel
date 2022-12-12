@@ -10,6 +10,7 @@ import ChooseModal from "../choose-modal/index.js";
 import Panel from "../panel/panel.js";
 import EditorMeta from "../editor-meta/editor-meta.js";
 import EditorImages from "../editor-images/editor-images.js";
+import Login from "../login/login.js";
 
 export default class Editor extends Component {
   constructor() {
@@ -20,27 +21,72 @@ export default class Editor extends Component {
       backupsList: [],
       newPageName: "",
       loading: true,
+      auth: false,
+      loginError: false,
+      logingLengthError: false,
     };
     this.isLoading = this.isLoading.bind(this);
     this.isLoaded = this.isLoaded.bind(this);
     this.save = this.save.bind(this);
     this.init = this.init.bind(this);
+    this.login = this.login.bind(this);
+    this.logout = this.logout.bind(this);
     this.restoreBackup = this.restoreBackup.bind(this);
   }
 
   componentDidMount() {
-    this.init(null, this.currentPage);
+    this.checkAuth();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.auth !== prevState.auth) {
+      this.init(null, this.currentPage);
+    }
+  }
+
+  checkAuth() {
+    axios.get("./api/checkAuth.php").then((res) => {
+      this.setState({
+        auth: res.data.auth,
+      });
+    });
+  }
+
+  login(pass) {
+    if (pass.length > 5) {
+      axios.post("./api/login.php", { password: pass }).then((res) => {
+        this.setState({
+          auth: res.data.auth,
+          loginError: !res.data.auth,
+          logingLengthError: false,
+        });
+      });
+    } else {
+      this.setState({
+        loginError: false,
+        logingLengthError: true,
+      });
+    }
+  }
+
+  logout() {
+    axios.get("./api/logout.php").then(() => {
+      window.location.replace("/");
+    });
   }
 
   init(e, page) {
     if (e) {
       e.preventDefault();
     }
-    this.isLoading();
-    this.iframe = document.querySelector("iframe");
-    this.open(page, this.isLoaded);
-    this.loadPageList();
-    this.loadBackupsList();
+
+    if (this.state.auth) {
+      this.isLoading();
+      this.iframe = document.querySelector("iframe");
+      this.open(page, this.isLoaded);
+      this.loadPageList();
+      this.loadBackupsList();
+    }
   }
 
   open(page, cb) {
@@ -185,11 +231,28 @@ export default class Editor extends Component {
   }
 
   render() {
-    const { loading, pageList, backupsList } = this.state;
+    const {
+      loading,
+      pageList,
+      backupsList,
+      auth,
+      loginError,
+      logingLengthError,
+    } = this.state;
     const modal = true;
     let spinner;
 
     loading ? (spinner = <Spinner active />) : (spinner = <Spinner />);
+
+    if (!auth) {
+      return (
+        <Login
+          login={this.login}
+          lengthErr={logingLengthError}
+          logErr={loginError}
+        />
+      );
+    }
 
     return (
       <>
@@ -205,7 +268,28 @@ export default class Editor extends Component {
 
         <Panel />
 
-        <ConfirmModal modal={modal} target={"modal-save"} method={this.save} />
+        <ConfirmModal
+          modal={modal}
+          target={"modal-save"}
+          method={this.save}
+          text={{
+            title: "Сохранение",
+            description: "Вы действительно хотите сохранить изменения?",
+            btn: "Опубликовать",
+          }}
+        />
+
+        <ConfirmModal
+          modal={modal}
+          target={"modal-logout"}
+          method={this.logout}
+          text={{
+            title: "Выход",
+            description: "Вы действительно хотите выйти?",
+            btn: "Выйти",
+          }}
+        />
+
         <ChooseModal
           modal={modal}
           target={"modal-open"}
